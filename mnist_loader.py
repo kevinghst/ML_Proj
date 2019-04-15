@@ -12,6 +12,7 @@ function usually called by our neural network code.
 # Standard library
 import pickle
 import gzip
+import pdb
 
 # Third-party libraries
 import numpy as np
@@ -40,7 +41,7 @@ def load_data():
     f.close()
     return (training_data, validation_data, test_data)
 
-def load_data_wrapper():
+def load_data_wrapper(digits=[]):
     """Return a tuple containing ``(training_data, validation_data,
     test_data)``. Based on ``load_data``, but the format is more
     convenient for use in our implementation of neural networks.
@@ -61,12 +62,33 @@ def load_data_wrapper():
     tr_d, va_d, te_d = load_data()
     training_inputs = [np.reshape(x, (784, 1)) for x in tr_d[0]]
     training_results = [vectorized_result(y) for y in tr_d[1]]
-    training_data = zip(training_inputs, training_results)
+    training_data = filter_zip(training_inputs, training_results, digits)
     validation_inputs = [np.reshape(x, (784, 1)) for x in va_d[0]]
-    validation_data = zip(validation_inputs, va_d[1])
+    validation_data = filter_zip(validation_inputs, va_d[1], digits)
     test_inputs = [np.reshape(x, (784, 1)) for x in te_d[0]]
-    test_data = zip(test_inputs, te_d[1])
+    test_data = filter_zip(test_inputs, te_d[1], digits)
     return (training_data, validation_data, test_data)
+
+def filter_zip(inputs, results, digits):
+    if not digits:
+        return zip(inputs, results)
+
+    filtered_results = []
+    filtered_inputs = []
+
+    for idx, result in enumerate(results):
+        for digit in digits:
+            if type(result) is np.ndarray:
+                if result[digit][0] == 1.0:
+                    filtered_results.append(result)
+                    filtered_inputs.append(inputs[idx])
+            else:
+                if result == digit:
+                    filtered_results.append(result)
+                    filtered_inputs.append(inputs[idx])
+
+    return zip(filtered_inputs, filtered_results)
+
 
 def vectorized_result(j):
     """Return a 10-dimensional unit vector with a 1.0 in the jth
